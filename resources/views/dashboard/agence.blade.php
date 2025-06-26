@@ -1,48 +1,51 @@
-@extends('layouts.agence')
+@extends('layouts.dashboard')
 
-@section('title', 'Dashboard Agence')
+@section('dashboard-content')
+<div class="container-fluid px-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+            <h2 class="mb-3">🏢 Tableau de bord – Agence</h2>
+            <a href="{{ route('annonce-create.dashboard') }}" class="btn btn-success">
+                ➕ Nouvelle annonce
+            </a>
+        </div>
+    </div>
 
-@section('content')
-<div class="container mt-4">
-
-    <h2 class="mb-4">Bienvenue sur votre espace Agence</h2>
-
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+    @if(session('success'))
+        <div class="alert alert-success shadow-sm">
+            {{ session('success') }}
+        </div>
     @endif
-
-    <a href="{{ route('annonces.ajouter') }}" class="btn btn-success mb-4">+ Publier une annonce</a>
-
-    <h4>Mes annonces publiées</h4>
 
     @if($annonces->isEmpty())
-        <div class="alert alert-info">
-            Vous n'avez publié aucune annonce pour le moment.
+        <div class="alert alert-info text-center">
+            Vous n’avez publié aucune annonce pour le moment.
         </div>
     @else
-        <table class="table table-bordered">
-            <thead class="table-light">
-                <tr>
-                    <th>Titre</th>
-                    <th>Description</th>
-                    <th>Ville</th>
-                    <th>Prix (€)</th>
-                    <th>Créée le</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($annonces as $annonce)
-                    <tr>
-                        <td>{{ $annonce->titre }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit($annonce->description, 100) }}</td>
-                        <td>{{ $annonce->ville }}</td>
-                        <td>{{ $annonce->prix }}</td>
-                        <td>{{ $annonce->created_at->format('d/m/Y') }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
+        <div class="row g-4">
+            @foreach($annonces as $annonce)
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        @if($annonce->photo)
+                            <img src="{{ asset('/adminlte/assets/img/maison.jpg' . $annonce->photo) }}" 
+                                 class="card-img-top rounded-top-4" 
+                                 alt="Photo de l'annonce"
+                                 style="height: 180px; object-fit: cover;">
+                        @endif
 
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-semibold">{{ $annonce->titre }}</h5>
+                            <p class="card-text text-truncate">{{ $annonce->description }}</p>
+                            <p class="text-muted small">
+                                📍 {{ $annonce->ville ?? 'Non spécifiée' }}<br>
+                                💰 {{ number_format($annonce->prix, 0, ',', ' ') }} FCFA
+                            </p>
+                           
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 </div>
 @endsection

@@ -1,15 +1,31 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
-    </x-slot>
+@extends('layouts.dashboard')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <x-welcome />
-            </div>
-        </div>
+@section('dashboard-content')
+    <h2>Bienvenue dans le tableau de bord</h2>
+    <p>Connecté en tant que {{ Auth::user()->name }} ({{ Auth::user()->role }})</p>
+
+    <hr>
+
+    <h4>Choisir une vue :</h4>
+
+    <form method="GET" action="{{ route('dashboard') }}">
+        <select name="section" onchange="this.form.submit()" class="form-select w-25">
+            <option value="">-- Choisir une section --</option>
+            <option value="agence" {{ request('section') == 'agence' ? 'selected' : '' }}>Agence</option>
+            <option value="bailleur" {{ request('section') == 'bailleur' ? 'selected' : '' }}>Bailleur</option>
+            <option value="locataire" {{ request('section') == 'locataire' ? 'selected' : '' }}>Locataire</option>
+        </select>
+    </form>
+
+    <div class="mt-4">
+        @if(request('section') == 'agence')
+            @include('dashboard.agence')
+        @elseif(request('section') == 'bailleur')
+            @include('dashboard.bailleur')
+        @elseif(request('section') == 'locataire')
+            @include('dashboard.locataire')
+        @else
+            <p>Veuillez choisir une section.</p>
+        @endif
     </div>
-</x-app-layout>
+@endsection

@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 class Interets extends Migration
 {
-    public function up(): void
+   public function up(): void
     {
         Schema::create('interets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('annonce_id')->constrained('annonces')->onDelete('cascade');
-            $table->foreignId('locataire_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('agence_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -20,20 +20,21 @@
                 <label for="email" class="form-label">Adresse e-mail</label>
                 <input type="email" name="email" class="form-control" required>
             </div>
-
-            <div class="mb-3">
-                <label for="role" class="form-label">Rôle</label>
-                <select name="role" class="form-select" required>
-                    <option value="bailleur">Bailleur</option>
-                    <option value="locataire">Locataire</option>
-                    <option value="agence">Agence</option>
-                </select>
-            </div>
-
+            
             <div class="mb-3">
                 <label for="password" class="form-label">Mot de passe</label>
                 <input type="password" name="password" class="form-control" required>
             </div>
+            <div class="mb-3">
+                 <label for="role" class="form-label">Je suis :</label>
+                 <select name="role" class="form-select" required>
+                 <option value="">Choisir un rôle</option>
+                 <option value="agence">Agence</option>
+                 <option value="bailleur">Bailleur</option>
+                 <option value="locataire">Locataire</option>
+                 </select>
+            </div>
+
 
             <button type="submit" class="btn btn-success w-100">S'inscrire</button>
         </form>

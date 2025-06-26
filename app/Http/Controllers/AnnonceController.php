@@ -2,33 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Annonce;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 
 class AnnonceController extends Controller
 {
+
     public function index()
     {
-        $annonces = Annonce::with('photos', 'user')->latest()->get();
-        return response()->json($annonces);
+        $annonces = Annonce::where('user_id', Auth::id())->latest()->get();
+        return view('dashboard.agence', compact('annonces'));
     }
-
-    public function store(Request $request)
+ public function store(Request $request)
     {
-        $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'required',
-            'agence_id' => 'required|exists:users,id',
-        ]);
+    $request->validate([
+        'titre' => 'required|string',
+        'description' => 'required|string',
+        'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+    ]);
 
-        $annonce = Annonce::create([
-            'titre' => $request->titre,
-            'description' => $request->description,
-            'agence_id' => $request->agence_id,
-        ]);
+    // Enregistrement de l'image
+    $path = $request->file('photo')->store('annonces', 'public');
 
-        return response()->json($annonce, 201);
+    Annonce::create([
+        'titre' => $request->titre,
+        'description' => $request->description,
+        'photo' => "/adminlte/assets/img/maison.jpg", // on enregistre juste le chemin
+    ]);
+
+    return redirect()->route('annonce.index')->with('success', 'Annonce ajoutée !');
     }
-}
 
+
+}

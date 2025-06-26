@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\User;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 class CreateAnnonces extends Migration
 {
@@ -18,14 +19,14 @@ class CreateAnnonces extends Migration
             $table->string('type_bien'); // appartement, maison, studio, etc.
             $table->integer('surface')->nullable();
             $table->integer('nombre_pieces')->nullable();
-            $table->decimal('loyer', 10, 2);
-            $table->string('adresse');
             $table->string('ville');
-            $table->boolean('disponible')->default(true);
+            $table->decimal('prix', 10, 2);
+            
 
             // Clés étrangères
-            $table->foreignId('agence_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('bailleur_id')->nullable()->constrained('users')->onDelete('cascade');
+           $table->unsignedBigInteger('user_id'); // pour désigner le créateur de l’annonce, quel que soit le profil
+
+           
 
             $table->timestamps();
         });
@@ -38,4 +39,6 @@ class CreateAnnonces extends Migration
     {
         Schema::dropIfExists('annonces');
     }
+
+
 }

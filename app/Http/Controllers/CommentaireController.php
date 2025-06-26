@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Commentaire;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class CommentaireController extends Controller
 {
-    public function store(Request $request)
-    {
-        $request->validate([
-            'locataire_id' => 'required|exists:users,id',
-            'annonce_id' => 'required|exists:annonces,id',
-            'contenu' => 'required|string',
-        ]);
+   public function store(Request $request, $annonceId) {
+    $request->validate([
+        'contenu' => 'required|string|max:1000',
+    ]);
 
-        $commentaire =  Commentaire::create($request->all());
+    Commentaire::create([
+        'annonce_id' => $annonceId,
+        'contenu' => $request->contenu,
+        'locataire_id' => Auth::id(), // <-- IMPORTANT !
+    ]);
 
-        return response()->json($commentaire, 201);
+    return back()->with('success', 'Commentaire ajouté');
     }
 }
 

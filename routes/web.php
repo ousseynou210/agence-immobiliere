@@ -1,196 +1,97 @@
 <?php
+
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AnnonceController;
-use App\Http\Controllers\CommentaireController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\AgenceController;
 use App\Http\Controllers\InteretController;
-use App\Http\Controllers\ContactBailleurAgenceController;
-use App\Http\Controllers\ContactLocataireAgenceController;
-use App\Http\Controllers\PhotoController;
-use App\Models\Annonce;
+use App\Http\Controllers\BailleurController;
+use App\Http\Controllers\LocataireController;
+use App\Http\Controllers\CommentaireController;
+use Illuminate\Support\Facades\Route;
 
-// Route publique
-Route::get('/bailleur', function () {
-    return view('dashboard.bailleur');
-});
-Route::get('/agence', function () {
-    return view('dashboard.agence');
-});
-Route::get('/locataire', function () {
-    return view('dashboard.locataire');
-});
-// Route de connexion
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// Page d'accueil
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
 
-
-Route::post('/login', function (Request $request) {
-    $credentials = $request->only('email', 'password');
-
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-
-        $role = Auth::user()->role;
-
-        // Redirection selon le rôle
-        if ($role === 'bailleur') {
-            return redirect('/bailleur');
-        } elseif ($role === 'locataire') {
-            return redirect('/locataire');
-        } elseif ($role === 'agence') {
-            return redirect('/agence');
-        } else {
-            return redirect('/'); // fallback
-        }
-    }
-
-    return back()->withErrors([
-        'email' => 'Identifiants incorrects.',
-    ]);
-})->name('login');
-
-Route::get('/logout', function () {
-    Auth::logout();
-    return redirect()->route('login');
-});
-
-// Route inscription
+//Page d'inscription
 Route::get('/register', function () {
     return view('auth.register');
 })->name('register');
 
 Route::post('/register', function (Request $request) {
-    $request->validate([
-        'name' => 'required',
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users',
         'password' => 'required|min:4',
-        'role' => 'required|in:bailleur,locataire,agence',
+        'role' => 'required|in:agence,bailleur,locataire',
     ]);
 
     User::create([
-        'name' => $request->name,
-        'email' => $request->email,
+        'name' => $validated['name'],
+        'email' => $validated['email'],
         'role' => $request->role,
-        'password' => Hash::make($request->password),
+        'password' => Hash::make($validated['password']),
+   ]);
+
+    return redirect()->route('login')->with('success', 'Compte créé avec succès.');
+});
+
+//Page de connexion
+Route::get('/login', function () {  
+  return view('auth.login');
+})->name('login');
+
+Route::post('/login', function (Request $request) {
+    $credentials = $request->only('email', 'password');
+
+    if (Auth::attempt($credentials)) {
+    $request->session()->regenerate();
+
+    $role = Auth::user()->role;
+
+    return match ($role) {
+        'agence' => redirect()->route('agence.dashboard'),
+        'bailleur' => redirect()->route('bailleur.dashboard'),
+        'locataire' => redirect()->route('locataire.dashboard'),
+        default => redirect('/dashboard')
+    };
+    }
+
+
+    return back()->withErrors([
+        'email' => 'Identifiants incorrects.',
     ]);
-
-    return redirect()->route('login')->with('success', 'Compte créé avec succès ! Connectez-vous.');
 });
 
+// Dashboard commun
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->name('dashboard');
 
-// Route après connexion
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-});
+// Dashboards spécifiques
+Route::get('/agence', [AgenceController::class, 'index'])->name('agence.dashboard');
+Route::get('/bailleur', [BailleurController::class, 'index'])->name('bailleur.dashboard');
+Route::get('/locataire', [LocataireController::class, 'dashboard'])->name('locataire.dashboard'); // 🔧 corrigé ici
 
-// Afficher le formulaire
-Route::get('/agence/annonces/ajouter', function () {
-    return view('annonces.ajouter');
-})->name('annonces.ajouter');
+// Annonces pour agences
 
-// Enregistrer une annonce
-Route::post('/agence/annonces/ajouter', function (Request $request) {
-    $request->validate([
-        'titre' => 'required|string|max:255',
-        'description' => 'required|string',
-        'ville' => 'required|string',
-        'prix' => 'required|numeric',
-    ]);
-
-    Annonce::create([
-        'titre' => $request->titre,
-        'description' => $request->description,
-        'ville' => $request->ville,
-        'prix' => $request->prix,
-        'agence_id' => Auth::id(),
-    ]);
-
-    return redirect('/agence')->with('success', 'Annonce publiée avec succès !');
-})->name('annonces.store');
+    Route::get('/agence/creer', [AgenceController::class, 'create'])->name('annonce-create.dashboard');
+    Route::post('/agence', [AgenceController::class, 'store'])->name('annonce-store.dashboard');
 
 
+// Bailleurs : voir annonces et contacter
+Route::get('/bailleur/agence/{id}/annonces', [BailleurController::class, 'showAnnonces'])->name('showannonces.dashboard');
+Route::get('/bailleur/agence/{id}/contact', [BailleurController::class, 'contactForm'])->name('contactagence.dashboard');
+Route::post('/bailleur/agence/{id}/contact', [BailleurController::class, 'sendContact'])->name('sendcontact.dashboard');
+
+// Commentaires et intérêt (locataires)
+Route::post('/commentaire/{annonce}', [CommentaireController::class, 'store'])->name('commentaire.store');
+Route::post('/interet/{annonce}', [InteretController::class, 'store'])->name('interet.store');
 
 
+// Voir toutes les annonces en tant que locataire
+Route::get('/locataire', [LocataireController::class, 'dashboard'])->name('locataire.dashboard');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// =============================
-//        ROUTES PAR RÔLE
-// =============================
-
-// ----- AGENCE -----
-Route::middleware(['auth', 'role:agence'])->group(function () {
-    Route::get('/agence/dashboard', [DashboardController::class, 'index']);
-    
-    // Gestion des annonces
-    Route::post('/annonces', [AnnonceController::class, 'store']);
-    Route::get('/annonces', [AnnonceController::class, 'index']);
-
-    // Ajout de photo à une annonce
-    Route::post('/photos', [PhotoController::class, 'store']);
-});
-
-// ----- LOCATAIRE -----
-Route::middleware(['auth', 'role:locataire'])->group(function () {
-    Route::get('/locataire/dashboard', [DashboardController::class, 'index']);
-
-    // Poster un commentaire sur une annonce
-    Route::post('/commentaires', [CommentaireController::class, 'store']);
-
-    // Montrer son intérêt pour une annonce
-    Route::post('/interets', [InteretController::class, 'store']);
-
-    // Contacter une agence
-    Route::post('/contact-locataire', [ContactLocataireAgenceController::class, 'store']);
-});
-
-// ----- BAILLEUR -----
-Route::middleware(['auth', 'role:bailleur'])->group(function () {
-    Route::get('/bailleur/dashboard', [DashboardController::class, 'index']);
-
-    // Contacter une agence
-    Route::post('/contact-bailleur', [ContactBailleurAgenceController::class, 'store']);
-});
